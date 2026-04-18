@@ -66,6 +66,8 @@
 | **D. 深層RL** | **Hybrid DRL** | 2D | [Paper: DWA-RL](https://www.google.com/search?q=https://ieeexplore.ieee.org/document/8968132) | DWAの評価関数をベースとするため、人間特有の複雑な意図予測や能動的な協調行動の表現は弱いです。 | DWAのパラメータを強化学習エージェントが動的に調整する構成のため推論負荷は低く、リアルタイム性は高いです。 | 【実用解】DWAの安全性をRLで動的調整します。 | システム構成が複雑になります。 |
 | **D. 深層RL** | **DRL-VO** | 2D | [drl\_vo\_nav](https://www.google.com/search?q=https://github.com/onlytailei/drl_vo_nav) | 幾何学的な衝突回避（VO）の制約を強く受けるため、人間の非対称な譲り合いや暗黙のルールは学習しにくい傾向にあります。 | ポリシー推論（MLP等）とVOの幾何学計算はどちらも軽量であり、エッジ環境でも高速に動作します。 | 【ハイブリッド】DRLでポリシー学習しつつ、VOで幾何学的な安全性も考慮します。 | VOの制約を強く受けすぎると保守的になる可能性があります。 |
 | **D. 深層RL** | **SAC / TD3** | - | [Stable-Baselines3](https://www.google.com/url?sa=E&source=gmail&q=https://github.com/DLR-RM/stable-baselines3) | 汎用的な強化学習アルゴリズムであり、社会力を持たせるには手動設計（Reward Shaping）する必要があります。 | Actorネットワークの推論は軽量な順伝播のみで完結し、数ミリ秒単位の超低遅延で実行できるため極めて高いです。 | 連続値制御の汎用手法であり探索に強く安定しています。 | ナビ特化ではない汎用アルゴリズムです。 |
+| **D. 深層RL** | **Falcon** | 2D/3D | [Falcon](https://github.com/Zeying-Gong/Falcon) | 将来の人間の軌跡を明示的に予測し、将来の経路を塞ぐ行動にペナルティを与えることでプロアクティブに道を譲ります。 | 予測モジュールと強化学習のハイブリッド構造により推論負荷が増加し、最適化が必要です。 | 【予測統合RL】将来予測をRLタスクに統合し、パーソナルスペース維持率(約90%)を達成したICRA2025モデルです。 | 大規模3Dシミュレータ環境での学習に依存するため、実機におけるSim-to-Real検証が必要です。 |
+| **D. 深層RL** | **HEIGHT** | 2D+Map | [CrowdNav_HEIGHT](https://github.com/Shuijing725/CrowdNav_HEIGHT) | 異種エージェント（歩行者・静的障害物）が混在する制約環境をグラフ構造で捉え、高度な社会力判断を行います。 | Transformerベースのグラフ演算を要するため、過密環境において推論レイテンシが増加する懸念があります。 | 【制約空間対応】狭い通路や障害物が多い環境でのナビゲーション性能（T-ASE 2026）に優れます。 | Graph Transformerの計算コストが高く、エッジデバイスでの実行にはモデル最適化が求められます。 |
 | **E. 視覚Nav** | **DD-PPO** | 3D Visual | [Habitat-Lab](https://www.google.com/url?sa=E&source=gmail&q=https://github.com/facebookresearch/habitat-lab) | 主に未知環境の探索と目標到達（PointGoal）を目的としており、群衆内の複雑な社会的相互作用の学習には不向きです。 | 視覚エンコーダ（ResNet等）の推論が毎ステップ発生するため、エッジで高周期ループを回すにはGPUリソースが必須です。 | 【視覚Nav】GPS+画像のみで未知環境を移動する超大規模分散学習です。 | 学習に膨大な計算リソースが必要です。 |
 | **E. 視覚Nav** | **ViNT** | 2D Image | [ViNT](https://www.google.com/search?q=https://github.com/robotic-vision-lab/ViNT) / [visualnav-transformer-ros2](https://www.google.com/search?q=https://github.com/robotic-vision-lab/visualnav-transformer-ros2) | 人を避けるアフォーダンスを暗黙的に学習しますが明示的相互作用モデリングはありません。 | 基盤モデル特有の重さから、TensorRT等による最適化が必須となります。 | 【視覚Nav標準】汎用基盤モデルであり異なるロボットへゼロショット転移可能です。 | 幾何学的な理解が弱いため局所回避にはDWA等の併用が強く推奨されます。 |
 | **E. 視覚Nav** | **LM-Nav** | Text+Img | [lm\_nav](https://www.google.com/search?q=https://github.com/blazeys/lm_nav) | 大局的・意味的な環境の常識は理解しますが、群衆での物理的マイクロ相互作用には関与しません。 | クラウドAPI通信等で数秒のレイテンシが発生し実時間制御に不適です。 | ゼロショットで自然言語の指示に従い複雑な屋外環境をナビゲーション可能です。 | ランドマーク依存で動的な回避行動を処理できません。 |
@@ -80,4 +82,13 @@
 | **E. 視覚Nav** | **VLM-Social-Nav** | Image | [arXiv:2404.00210](https://arxiv.org/abs/2404.00210) | 意味論的理解を社会的エンティティのスコアとしてナビゲーションに統合します。 | クラウドAPIや巨大ローカルVLM依存で数十msのレイテンシがあります。 | シーンの文脈を解釈し、社会的エンティティをリアルタイムでスコア化します。 | クラウドAPI等への依存と推論レイテンシが課題です。 |
 | **E. 視覚Nav** | **GSON** | Image | [GSON](https://github.com/lsylsy0516/GSON) | 意味的グループを検出し、集団の結びつきを物理的に分断しない経路を生成します。 | LMMの推論遅延がネックであり非同期設計が不可欠です。 | グループの結びつきを物理的に分断しないマクロな経路生成が可能です。 | 推論レイテンシによる同期制御の困難さがあります。 |
 | **E. 視覚Nav** | **OLiVia-Nav** | Image | [Paper (ICRA 2025)](https://www.researchgate.net/publication/395230283_OLiVia-Nav_An_Online_Lifelong_Vision_Language_Approach_for_Mobile_Robot_Social_Navigation) | VLMの意味論的理解を引き継ぎつつ、パーソナルスペース侵害を最小化します。 | 軽量な視覚エンコーダへの蒸留により数十FPSでエッジ推論可能です。 | 社会力とエッジ適性を見事に両立し生涯学習機能付きです。 | 継続学習パイプラインの実装コスト、蒸留の複雑さがあります。 |
+| **E. 視覚Nav** | **VLM-Etiquette** | Image+State | [arXiv:2602.09002](https://arxiv.org/abs/2602.09002) | 記念撮影中や作業中など、単純な距離では測れない「社会的エチケット（文脈）」を理解し経路に反映します。 | VLMの推論を伴うためレイテンシが発生し、ミリ秒単位の高周期制御ループへの組み込みは困難です。 | 人の「活動内容」を意味論的に解釈し、行動を妨げない経路をファインチューン済みVLMで自律選択します。 | VLMの推論遅延が避けられないため、高速な幾何学的ローカルプランナーとの非同期協調が必須です。 |
 | **Platform** | **Arena-Rosnav** | System | [Arena-Rosnav](https://github.com/Arena-Rosnav/arena-rosnav) | - | 環境構築にGPU等が必要です。 | 【開発環境】RLエージェントの学習・評価・比較を行う統合環境です。 | 環境構築にGPU等が必要です。 |
+
+---
+### 今回の追加・変更内容のまとめ
+* 自律調査により、2025年〜2026年直近に発表されたSOTA（State-of-the-Art）論文・モデルを3件新規抽出して追記しました。
+* **Falcon (ICRA 2025追加)**: 「D. 深層RL」カテゴリに追記。人間の軌跡予測を強化学習タスクに組み込み、プロアクティブな回避（パーソナルスペース維持率の大幅向上）を実現する統合フレームワークとして追加しました。
+* **HEIGHT (T-ASE 2026追加)**: 「D. 深層RL」カテゴリに追記。Heterogeneous Interaction Graph Transformerを使用し、障害物と歩行者が混在する制約された空間での推論性能が向上した最新モデルとして評価しました。
+* **VLM-Etiquette (arXiv 2026追加)**: 「E. 視覚Nav」カテゴリに追記。距離や速度といった物理・幾何学的制約を超え、「写真撮影中」などの高次な社会的エチケットをVLMによって意味論的に解釈する先進的なアプローチを反映させました。
+* 評価軸（🌟社会力、🌟エッジ適性、メリット、デメリット）について、アーキテクチャの特性から専門的に推論し、統一されたフォーマット内で最適化された解説を記述しました。
